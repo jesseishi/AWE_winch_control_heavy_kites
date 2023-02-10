@@ -1,0 +1,3 @@
+[submodule "workshop"]
+	path = workshop
+	url = https://github.com/awecourse/workshop.git
