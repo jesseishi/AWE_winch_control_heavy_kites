@@ -1,0 +1,8 @@
+---
+kite:
+  C_L: 2
+  E_excl_tether: 8.4
+  S: 150
+  m: 6885.2
+environment:
+  rho: 1.225
