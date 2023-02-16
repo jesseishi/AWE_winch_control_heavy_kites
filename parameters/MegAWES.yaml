@@ -2,6 +2,7 @@
 kite:
   C_L: 2
   E_excl_tether: 8.4
+  C_R: 2.01
   S: 150
   m: 6885.2
 environment:
