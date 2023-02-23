@@ -1,11 +1,12 @@
 ---
 kite:
-  C_L: 1.76
+  C_L: 1.8
   E: 8.4            # lift-drag ratio exclusive tether, qsm.py will calculate tether contribution.
   S_m2: 150.45
   m_kg: 0.0
 tether:
-  rho_kgpm3: 0.0  # tether density [kg/m3]
+  rho_kgpm3: 0.0    # tether density [kg/m3]
   r_m: 0.01485      # tether radius [m]
+  Cd_t: 1.1         # tether drag coefficient [-]
 environment:
   rho_kgpm3: 1.225
