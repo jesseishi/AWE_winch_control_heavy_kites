@@ -13,7 +13,7 @@ from tqdm import tqdm
 (parent_folder_path, _) = os.path.split(os.getcwd())
 workshop_path = os.path.join(parent_folder_path, "workshop")
 sys.path.append(workshop_path)
-from qsm import Environment, KiteKinematics, SteadyState, SysPropsFixedAeroCoeffs
+from qsm import Environment, KiteKinematics, SteadyState, SystemProperties
 
 
 # Class that builds a DataFrame containing lots of possible steady states for
@@ -118,16 +118,17 @@ class QSSBuilder:
                 continue
 
             # Calculate reeling factor, tether force ground, and power.
-            f, Ftg_N, P_W = self.calc_fFP(row)
+            f, Ftg_N, P_W, E_eff = self.calculate_new_state(row)
 
             # Put values in the DataFrame.
             self.df.at[row.Index, "calculated_SS"] = True
             self.df.at[row.Index, "f"] = f
             self.df.at[row.Index, "Ftg_N"] = Ftg_N
             self.df.at[row.Index, "P_W"] = P_W
+            self.df.at[row.Index, "E_eff"] = E_eff
             self.df.at[row.Index, "vr_mps"] = f * row.vw_mps
 
-    def calc_fFP(self, row):
+    def calculate_new_state(self, row):
         # Wrapper around SteadyState class of qsm.py
         # Make the environment, system properties and kite kinematic objects.
         env_state = {
@@ -141,11 +142,11 @@ class QSSBuilder:
             "kite_mass": self.kite["m_kg"],
             "tether_density": self.tether["rho_kgpm3"],
             "tether_diameter": self.tether["r_m"] * 2,
-            "lift_to_drag": self.kite["E"],
-            "aerodynamic_force_coefficient": self.kite["C_L"]
-            * np.sqrt(1.0 + (1.0 / self.kite["E"]) ** 2.0),
+            "kite_lift_coefficient_powered": self.kite["C_L"],
+            "kite_drag_coefficient_powered": self.kite["C_L"] / self.kite["E"],
+            "tether_drag_coefficient": self.tether["Cd_t"],
         }
-        sys_props = SysPropsFixedAeroCoeffs(**sys_props)
+        sys_props = SystemProperties(sys_props)
 
         kite_kinematics = {
             "straight_tether_length": row.Lt_m,
@@ -154,6 +155,9 @@ class QSSBuilder:
             "course_angle": np.deg2rad(row.chi_deg),
         }
         kite_kinematics = KiteKinematics(**kite_kinematics)
+
+        # The mass of the tether and aerodynamic properties including the tether length
+        # can now be calculated.
         sys_props.update(kite_kinematics.straight_tether_length)
 
         ss = SteadyState()
@@ -162,13 +166,18 @@ class QSSBuilder:
 
         try:
             ss.find_state(sys_props, env_state, kite_kinematics)
-            result = (ss.reeling_factor, ss.tether_force_ground, ss.power_ground)
+            result = (
+                ss.reeling_factor,
+                ss.tether_force_ground,
+                ss.power_ground,
+                sys_props.lift_to_drag,
+            )
         except Exception:
-            result = (np.nan, np.nan, np.nan)
+            result = (np.nan, np.nan, np.nan, np.nan)
 
         # It sometimes happens that the SteadyState converges but returns None.
         if ss.tether_force_kite is None:
-            result = (np.nan, np.nan, np.nan)
+            result = (np.nan, np.nan, np.nan, np.nan)
             ss.converged = False
 
         if ss.converged:
@@ -187,7 +196,7 @@ class QSSBuilder:
                 print(
                     f"final tether force ({ss.tether_force_kite}, setpoint ({row.Ftk_N})."
                 )
-                result = (np.nan, np.nan, np.nan)
+                result = (np.nan, np.nan, np.nan, np.nan)
 
         return result
 
