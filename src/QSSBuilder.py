@@ -14,6 +14,7 @@ from tqdm import tqdm
 workshop_path = os.path.join(parent_folder_path, "workshop")
 sys.path.append(workshop_path)
 from qsm import Environment, KiteKinematics, SteadyState, SystemProperties
+from helper.load_params import load_params
 
 
 # Class that builds a DataFrame containing lots of possible steady states for
@@ -24,7 +25,9 @@ from qsm import Environment, KiteKinematics, SteadyState, SystemProperties
 class QSSBuilder:
     def __init__(self, param_name: str) -> None:
         self.param_name = param_name
-        self.kite, self.tether, self.environment = load_params(param_name)
+        self.kite, self.tether, _, self.environment = load_params(
+            param_name, "..\\parameters"
+        )
         self.df = pd.DataFrame()
 
     @classmethod
@@ -208,23 +211,6 @@ class QSSBuilder:
             print(f"Saving DataFrame of {self} as {name}.csv")
 
         self.df.to_csv(f"../results/{name}.csv")
-
-
-# Some helper functions.
-def load_params(param_name):
-
-    # Load the parameter file. These are values that will remain fixed.
-    with open(f"../parameters/{param_name}.yaml", "r") as f:
-        try:
-            params = yaml.safe_load(f)
-            kite = params["kite"]
-            tether = params["tether"]
-            environment = params["environment"]
-
-        except yaml.YAMLError as exc:
-            print(exc)
-
-    return kite, tether, environment
 
 
 def load_df(param_name, verbose=True):
