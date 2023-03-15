@@ -19,7 +19,7 @@ from helper.load_params import load_params
 
 # Class that builds a DataFrame containing lots of possible steady states for
 # a certain set of parameters.
-# TODO: Path stuff: You now need to run this from the `src` directory and from a Windows machine.
+# TODO: Path stuff: You now need to run this from the `src` directory and from a Windows machine. Use builtin pathlib.
 # TODO: logging instead of print, see: https://stackoverflow.com/questions/15727420/using-logging-in-multiple-modules
 # and https://docs.python.org/3/howto/logging.html#configuring-logging-for-a-library
 class QSSBuilder:
@@ -145,8 +145,8 @@ class QSSBuilder:
             "kite_mass": self.kite["m_kg"],
             "tether_density": self.tether["rho_kgpm3"],
             "tether_diameter": self.tether["r_m"] * 2,
-            "kite_lift_coefficient_powered": self.kite["C_L"],
-            "kite_drag_coefficient_powered": self.kite["C_L"] / self.kite["E"],
+            "kite_lift_coefficient_powered": self.kite["CL"],
+            "kite_drag_coefficient_powered": self.kite["CL"] / self.kite["E"],
             "tether_drag_coefficient": self.tether["Cd_t"],
         }
         sys_props = SystemProperties(sys_props)

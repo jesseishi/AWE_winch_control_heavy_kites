@@ -35,8 +35,8 @@ def calc_Ft(
         "kite_mass": kite["m_kg"],
         "tether_density": tether["rho_kgpm3"],
         "tether_diameter": tether["r_m"] * 2,
-        "kite_lift_coefficient_powered": kite["C_L"],
-        "kite_drag_coefficient_powered": kite["C_L"] / kite["E"],
+        "kite_lift_coefficient_powered": kite["CL"],
+        "kite_drag_coefficient_powered": kite["CL"] / kite["E"],
         "tether_drag_coefficient": tether["Cd_t"],
     }
     sys_props = SystemProperties(sys_props)

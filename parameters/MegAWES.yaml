@@ -1,7 +1,7 @@
 # MegAWES parameters obtained from eijkelhofSixdegreesoffreedomSimulationModel2022.
 ---
 kite:
-  C_L: 1.8          # lift coefficient [-]
+  CL: 1.8          # lift coefficient [-]
   E: 8.4            # lift-drag ratio exclusive tether [-], qsm.py will calculate tether contribution.
   S_m2: 150.45      # wing reference area [m^2]
   m_kg: 6885.2      # mass [kg]
@@ -10,8 +10,8 @@ tether:
   r_m: 0.01485      # tether radius [m]
   Cd_t: 1.1         # tether drag coefficient [-]
 winch:
-  r: 0.4            # radius [m]
-  J: 32.0           # inertia [kgm^2]
+  r_m: 0.4            # radius [m]
+  J_kgm2: 32.0           # inertia [kgm^2]
   friction: 10.0    # rotational friction coefficient [Nm/(rad/s)]
 environment:
   rho_kgpm3: 1.225  # density [kg/m^3]

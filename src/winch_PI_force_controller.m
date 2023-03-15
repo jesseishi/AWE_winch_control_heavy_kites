@@ -8,7 +8,7 @@ addpath('src/helper')
 %% Update some paramters, based on tether length.
 Lt_m = 1000;  % tether length.
 kite.E_eff = calc_E_eff(Lt_m, kite, tether);
-kite.CR_eff = kite.C_L * sqrt(1 + 1/kite.E_eff^2);
+kite.CR_eff = kite.CL * sqrt(1 + 1/kite.E_eff^2);
 kite.C = 0.5 * environment.rho_kgpm3 * kite.S_m2 * kite.CR_eff * (1 + kite.E_eff^2);
 
 
@@ -24,13 +24,13 @@ if use_massless
     
     % State-space system with extra state Ft_int which can be used for
     % feedback.
-    A = [((-2*vw_0 + 2*vr_0) * kite.C * winch.r^2 - winch.friction)/winch.J, 0;
+    A = [((-2*vw_0 + 2*vr_0) * kite.C * winch.r_m^2 - winch.friction)/winch.J_kgm2, 0;
          kite.C * (-2*vw_0 + 2*vr_0),                                        0];
     % Split inputs of torque and wind because one is an input and the otherone
     % is a disturbance.
-    B_tau = [-winch.r / winch.J;
+    B_tau = [-winch.r_m / winch.J_kgm2;
              0                 ];
-    B_vw = [((2*vw_0 - 2*vr_0) * kite.C * winch.r^2) / winch.J;
+    B_vw = [((2*vw_0 - 2*vr_0) * kite.C * winch.r_m^2) / winch.J_kgm2;
             kite.C * (2*vw_0 - 2*vr_0)];
     B = [B_tau, B_vw];
     C = [kite.C * (-2*vw_0 + 2*vr_0), 0;
@@ -46,11 +46,11 @@ if use_massless
 else
     theta_1 = -150842.6;
     theta_2 = 109489.2;
-    A = [(theta_1*winch.r^2 - winch.friction)/winch.J, 0;
+    A = [(theta_1*winch.r_m^2 - winch.friction)/winch.J_kgm2, 0;
          -theta_1,                                     0];
-    B_tau = [-winch.r/winch.J;
+    B_tau = [-winch.r_m/winch.J_kgm2;
              0];
-    B_vw = [theta_2*winch.r^2/winch.J;
+    B_vw = [theta_2*winch.r_m^2/winch.J_kgm2;
             -theta_2];
     B = [B_tau, B_vw];
     C = [-theta_1, 0;

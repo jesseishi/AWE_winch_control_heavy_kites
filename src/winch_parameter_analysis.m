@@ -9,7 +9,7 @@ s = tf('s');
 %% Update some paramters, based on tether length.
 Lt_m = 1000;  % tether length.
 kite.E_eff = calc_E_eff(Lt_m, kite, tether);
-kite.CR_eff = kite.C_L * sqrt(1 + 1/kite.E_eff^2);
+kite.CR_eff = kite.CL * sqrt(1 + 1/kite.E_eff^2);
 kite.C = 0.5 * environment.rho_kgpm3 * kite.S_m2 * kite.CR_eff * (1 + kite.E_eff^2);
 
 %% TODO: simple analysis of time constant etc..
@@ -23,12 +23,12 @@ hold on
 v_r_0 = 5;
 
 for J = logspace(3, 7, 5)
-    tf_PF = (12*kite.C*v_r_0^2*winch.r^2) / (J*s + 8*kite.C*winch.r^2*v_r_0 + winch.friction);
+    tf_PF = (12*kite.C*v_r_0^2*winch.r_m^2) / (J*s + 8*kite.C*winch.r_m^2*v_r_0 + winch.friction);
 
     % P and F are not directly comparable so it's better to make a plot of
     % P(s)/P_ideal / F(s).
-    tf_PF_normalized = (12*kite.C*v_r_0^2*winch.r^2) / (J*s + 8*kite.C*winch.r^2*v_r_0 + winch.friction) * ...
-        (8*kite.C*winch.r^2*v_r_0 + winch.friction) / (12*kite.C*v_r_0^2*winch.r^2);
+    tf_PF_normalized = (12*kite.C*v_r_0^2*winch.r_m^2) / (J*s + 8*kite.C*winch.r_m^2*v_r_0 + winch.friction) * ...
+        (8*kite.C*winch.r_m^2*v_r_0 + winch.friction) / (12*kite.C*v_r_0^2*winch.r_m^2);
     bode(tf_PF_normalized)
 end
 grid on
