@@ -1,4 +1,4 @@
-# Used by Matlab to access the qsm.py library.
+# Used by Matlab and Simulink to access the qsm.py library.
 import os
 import sys
 

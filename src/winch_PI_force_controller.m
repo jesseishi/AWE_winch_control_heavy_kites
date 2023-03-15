@@ -1,4 +1,4 @@
-%% Set some winch parameters close to the values of MegAWES.
+%% Set the parameters.
 clear
 close all
 addpath('src')
