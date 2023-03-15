@@ -1,16 +1,15 @@
-# Used by Matlab and Simulink to access the qsm.py library.
 import os
 import sys
 
 import numpy as np
 
-from load_params import load_params
+from helper.load_params import load_params
 
 # When working with submodules it is a bit awkward to import them, especially if
 # they're not python packages (with __init__.py files).
 # https://stackoverflow.com/questions/29746958/how-to-import-python-file-from-git-submodule
 (parent_folder_path, _) = os.path.split(os.getcwd())
-workshop_path = os.path.join(parent_folder_path, "workshop")
+workshop_path = os.path.join(parent_folder_path, "../workshop")
 sys.path.append(workshop_path)
 from qsm import Environment, KiteKinematics, SteadyState, SystemProperties
 
@@ -22,9 +21,8 @@ def calc_Ft(
     beta_deg,
     phi_deg,
     chi_deg,
-    params_dir=None,
 ):
-    kite, tether, _, environment = load_params("my_MegAWES", params_dir)
+    kite, tether, _, environment = load_params("my_MegAWES", "..\\parameters")
 
     env_state = {
         "wind_speed": vw_mps,
@@ -71,7 +69,3 @@ def calc_Ft(
         result = (np.nan, np.nan, np.nan, np.nan)
 
     return result[1]
-
-
-if __name__ == "__main__":
-    print(calc_Ft(10, 1, 1000, 0, 0, 0, params_dir="parameters"))

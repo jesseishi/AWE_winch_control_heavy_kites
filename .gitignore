@@ -6,3 +6,6 @@ results/
 
 # python
 __pycache__/
+
+# Matlab
+slprj/
