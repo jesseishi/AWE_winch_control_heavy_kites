@@ -1,9 +1,9 @@
 %% Set the parameters.
 clear
 close all
-addpath('src')
-addpath('src/helper')
-[kite, tether, winch, environment] = load_params_mat("my_MegAWES", "parameters");
+addpath('helper')
+[kite, tether, winch, environment] = load_params_mat("my_MegAWES", "../parameters");
+
 
 %% Update some paramters, based on tether length.
 Lt_m = 1000;  % tether length.
@@ -24,17 +24,18 @@ if use_massless
     
     % State-space system with extra state Ft_int which can be used for
     % feedback.
+    % TODO: REDO!
     A = [((-2*vw_0 + 2*vr_0) * kite.C * winch.r_m^2 - winch.friction)/winch.J_kgm2, 0;
-         kite.C * (-2*vw_0 + 2*vr_0),                                        0];
+         kite.C * (-2*vw_0 + 2*vr_0),                                               0];
     % Split inputs of torque and wind because one is an input and the otherone
     % is a disturbance.
     B_tau = [-winch.r_m / winch.J_kgm2;
-             0                 ];
+             0                        ];
     B_vw = [((2*vw_0 - 2*vr_0) * kite.C * winch.r_m^2) / winch.J_kgm2;
             kite.C * (2*vw_0 - 2*vr_0)];
     B = [B_tau, B_vw];
     C = [kite.C * (-2*vw_0 + 2*vr_0), 0;
-         0,                             1];
+         0,                           1];
     D_tau = [0;
              0];
     D_vw = [kite.C * (2*vw_0 - 2*vr_0);
@@ -67,24 +68,24 @@ end
 %% Analysis
 close all
 figure(1)
-step(sys(1, 2))  % From wind speed to tether force. It is already stable, but we want it faster.
+step(sys(1, 2))  % From wind speed to tether force. It is already stable, but we want it faster and without steady-state error.
 grid('on')
-saveas(gcf, 'results/open_loop_step.png')
+saveas(gcf, '../results/open_loop_step.png')
 
 figure(2)
 bode(sys(1, 2))
 grid('on')
-saveas(gcf, 'results/open_loop_bode.png')
+saveas(gcf, '../results/open_loop_bode.png')
 
 %% PID design.
 Ft_over_tau = sys(1, 1);
 pidTuner(Ft_over_tau)
-% Here we want output (Ft) disturbance rejection at a frequency slighly
-% lower than 31.415 (frequency of system with feedforward control law).
+% Here we want output (Ft) disturbance rejection. I don't know how to
+% select the bandwidth appropriately.
 
 %% PID parameters
-Kp = -0.9;
-Ki = -30;
+Kp = -0.68;
+Ki = -31;
 % For tau = - K y:
 K = [Kp, Ki];
 
@@ -114,7 +115,7 @@ step(sys(1, 2))
 legend('closed loop', 'open loop')
 hold off
 grid('on')
-saveas(gcf, 'results/closed_loop_step.png')
+saveas(gcf, '../results/closed_loop_step.png')
 
 % And to a ramp in wind.
 t = linspace(0, 100, 10000);
@@ -125,6 +126,7 @@ u = sin(pi/10*t);  % w_MegAWES = pi/10 rad/s
 % u = u + 0.01*randn(size(u));  % turbulence, but since there is not
 % damping in the tether and there's a feedforward term D this does not
 % produce realistic results.
+% TODO: open loop should be also good here right?
 figure(6)
 lsim(sys_cl_vw(1), u, t)
 hold on
@@ -132,7 +134,7 @@ lsim(sys(1, 2), u, t);
 legend('closed loop', 'open loop')
 hold off
 grid('on')
-saveas(gcf, 'results/closed_loop_at_MegAWES_freq.png')
+saveas(gcf, '../results/closed_loop_at_MegAWES_freq.png')
 
 % Bode plots
 figure(7)
@@ -142,7 +144,7 @@ bode(sys(1, 2))
 legend('closed loop', 'open loop')
 hold off
 grid('on')
-saveas(gcf, 'results/closed_loop_bode.png')
+saveas(gcf, '../results/closed_loop_bode.png')
 
 
 

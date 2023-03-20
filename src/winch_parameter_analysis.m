@@ -1,9 +1,8 @@
 %% Set some winch parameters close to the values of MegAWES.
 clear
 close all
-addpath('src')
-addpath('src/helper')
-[kite, tether, winch, environment] = load_params_mat("MegAWES", "parameters");
+addpath('helper')
+[kite, tether, winch, environment] = load_params_mat("MegAWES", "../parameters");
 s = tf('s');
 
 %% Update some paramters, based on tether length.
@@ -15,21 +14,33 @@ kite.C = 0.5 * environment.rho_kgpm3 * kite.S_m2 * kite.CR_eff * (1 + kite.E_eff
 %% TODO: simple analysis of time constant etc..
 
 
+%% Trim point analysis.
+vr = 0:0.001:5;
+Ft = (4*kite.C*winch.r_m^2*vr.^2+winch.friction*vr ) / winch.r_m^2;
+figure
+plot(vr, Ft)
+
 
 %% Bode plot of P(s)/F(s) for different values of J.
+% Uses Ft as input (Ft is thus not affected by vr -> would need a kite
+% model for that and now all effects on the kite (wind, beta, phi, chi,
+% Lt, etc..) are collapsed into the effect of Ft. The winch does assume a
+% massless kite model to provide feedforward control.
 figure
 hold on
 
-v_r_0 = 5;
+vr_0 = 2.8487939;
+Ft_0 = (4*kite.C*winch.r_m^2*vr_0^2+winch.friction*vr_0 ) / winch.r_m^2
 
 for J = logspace(3, 7, 5)
-    tf_PF = (12*kite.C*v_r_0^2*winch.r_m^2) / (J*s + 8*kite.C*winch.r_m^2*v_r_0 + winch.friction);
+    tf_PF = (12*kite.C*vr_0^2*winch.r_m^2) / (J*s + 8*kite.C*winch.r_m^2*vr_0 + winch.friction);
 
     % P and F are not directly comparable so it's better to make a plot of
     % P(s)/P_ideal / F(s).
-    tf_PF_normalized = (12*kite.C*v_r_0^2*winch.r_m^2) / (J*s + 8*kite.C*winch.r_m^2*v_r_0 + winch.friction) * ...
-        (8*kite.C*winch.r_m^2*v_r_0 + winch.friction) / (12*kite.C*v_r_0^2*winch.r_m^2);
+    tf_PF_normalized = (12*kite.C*vr_0^2*winch.r_m^2) / (J*s + 8*kite.C*winch.r_m^2*vr_0 + winch.friction) * ...
+        (8*kite.C*winch.r_m^2*vr_0 + winch.friction) / (12*kite.C*vr_0^2*winch.r_m^2);
     bode(tf_PF_normalized)
+%     damp(tf_PF_normalized);
 end
 grid on
 xline(pi/10)
@@ -37,7 +48,7 @@ legend('J = 1e3 kgm^2', 'J = 1e4 kgm^2', 'J = 1e5 kgm^2', 'J = 1e6 kgm^2', 'J = 
 
 % TODO: idk how to put the xline in both upper and lower plots
 % automatically (now I just click and redo the command..).
-% saveas(gcf, 'results/bode_P_over_Pideal_over_f.png')
+% saveas(gcf, '../results/bode_P_over_Pideal_over_f.png')
 
 
 %% Visualise the magnitude of the bode plot at the MegAWES frequency for different J, r and v_r_0.
@@ -55,7 +66,7 @@ rv = linspace(0.1, 5, N);
 MAGS_V = abs( (8*kite.C*RV.^2.*V_R_0V + winch.friction) ./ (JV*w*1i + 8*kite.C*RV.^2.*V_R_0V + winch.friction));
 
 figure('Units', 'centimeters', 'Position', [5, 5, 15.75, 10])
-v_r_slice = [0.1, 1, 5, 20];
+v_r_slice = [0.1, 2.848, 20];
 colors = {'red', 'blue', 'cyan', 'green'};
 for i=1:length(v_r_slice)
     % The order of [0.95, 0.99] doesn't matter, it will sort it from low to
@@ -80,4 +91,4 @@ set(gca, 'xscale', 'log')
 xlim([Jv(1), Jv(end)])
 
 % title('inertia and radius for certain power fractions (pf) at distinct reel-out speeds.')
-saveas(gcf, 'results/power_frac_Jrvr0.png')
+saveas(gcf, '../results/power_frac_Jrvr0.png')

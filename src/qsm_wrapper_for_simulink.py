@@ -66,6 +66,8 @@ def calc_Ft(
             sys_props.lift_to_drag,
         )
     except Exception:
+        # A nan value results in an error in Simulink which is ok - then we
+        # just can't fly to states which we can't simulate.
         result = (np.nan, np.nan, np.nan, np.nan)
 
     return result[1]

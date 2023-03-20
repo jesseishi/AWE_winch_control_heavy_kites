@@ -11,3 +11,4 @@ __pycache__/
 slprj/
 *.autosave
 *.slxc
+*.asv
