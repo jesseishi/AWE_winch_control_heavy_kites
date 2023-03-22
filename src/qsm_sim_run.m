@@ -18,9 +18,12 @@ addpath('../parameters/')
 
 % New method.
 % [scenario_name, signals, init, sim_params] = scenario_1A_change_in_path();
-[scenario_name, signals, init, sim_params] = scenario_1B_change_in_wind_speed();
+% [scenario_name, signals, init, sim_params] = scenario_1B_change_in_wind_speed();
 % [scenario_name, signals, init, sim_params] = scenario_1C_faster_changes();
-% [scenario_name, signals, init, sim_params] = scenario_2_use_massless();
+% [scenario_name, signals, init, sim_params] = scenario_2A_power_curve();
+% [scenario_name, signals, init, sim_params] = scenario_2B_power_curve_massless_controller();
+[scenario_name, signals, init, sim_params, winch] = scenario_3A_bigger_inertia(winch);  % Use PI controller tuned for this.
+% scenario_name = "scenario_3B_bigger_inertia_no_PI";  % Adjust in Simulink.  HIGHER POWER OUTPUT... OH NO. I think this shows that a not greedy strategy is better (not highest instantaneous power extraction).
 
 
 %% Plot path.
@@ -76,6 +79,35 @@ legend('actual', 'ref', 'error')
 ylabel('tether force [N]')
 xlabel('time [s]')
 grid on
+% ylim([-0.5e6, 5e6])
+
+if scenario_name == "scenario_1A_change_in_path"
+    ylim([-0.5e6, 1.5e6])
+    % Create zoomed plot inside the figure.
+    axes('Position',[.55 .452 .2 .2])
+    box on
+    idx = (out.Ft_N.Time > 25.2) & (out.Ft_N.Time < 26.3);
+    plot(out.Ft_N.Time(idx), out.Ft_N.Data(idx))
+    hold on
+    plot(out.Ft_ref_N.Time(idx), out.Ft_ref_N.Data(idx), '--')
+    hold off
+    ylim([0.49e6, 0.52e6])
+    title('zoom')
+    grid
+elseif scenario_name == "scenario_1B_change_in_wind_speed"
+    axes('Position',[.675 .30 .2 .2])
+    box on
+    idx = (out.Ft_N.Time > 30) & (out.Ft_N.Time < 38);
+    plot(out.Ft_N.Time(idx), out.Ft_N.Data(idx))
+    hold on
+    plot(out.Ft_ref_N.Time(idx), out.Ft_ref_N.Data(idx), '--')
+    hold off
+    ylim([0.45e6, 0.55e6])
+    title('zoom')
+    grid
+end
+
+
 saveas(gcf, "../results/verification/"+scenario_name+"_tether_force.png")
 
 %% Torque
@@ -89,6 +121,7 @@ hold off
 ylabel('winch torque [Nm]')
 xlabel('time [s]')
 grid on
+ylim([-1e7, 1e7])
 saveas(gcf, "../results/verification/"+scenario_name+"_torque.png")
 
 %% Reeling speed
@@ -104,13 +137,16 @@ saveas(gcf, "../results/verification/"+scenario_name+"_reeling_speed.png")
 figure(4)
 plot(out.Pmech_W)
 hold on
-Pmech_avg_W = mean(out.Pmech_W);
-yline(Pmech_avg_W, '--')
+idx = out.Pmech_W.Time > 0.35;
+temp = timeseries(out.Pmech_W.Data(idx), out.Pmech_W.Time(idx));
+Pmech_avg_W = mean(temp, 'Weighting', 'Time');
+yline(Pmech_avg_W, '--', sprintf('%.2f MW', Pmech_avg_W/1e6))
 hold off
 legend('power', 'mean')
 ylabel('power output [W]')
 xlabel('time [s]')
 grid on
+ylim([-2e7, 7e7])
 saveas(gcf, "../results/verification/"+scenario_name+"_power.png")
 
 
@@ -118,11 +154,12 @@ saveas(gcf, "../results/verification/"+scenario_name+"_power.png")
 figure(5)
 plot(out.vr_mps.Data, resample(out.Ft_N, out.vr_mps.Time).Data);
 hold on
-theta = [146429.5 28806.3 28242.9];
+theta = [187486.8, 7784.0, 30865.2];
+% theta = [146429.5 28806.3 28242.9];
 vr_mps = min(0, min(out.vr_mps)):0.1:max(out.vr_mps);
 Ft_star_N = theta(1) + theta(2) * vr_mps + theta(3) * vr_mps.^2;
-Ft_star_N = max(Ft_star_N, 0.25e6);
-Ft_star_N(vr_mps < 0) = 0.25e6;
+Ft_star_N = max(Ft_star_N, 0.5e6);
+Ft_star_N(vr_mps < 0) = 0.5e6;
 plot(vr_mps, Ft_star_N, '--');
 legend('actual', 'ideal')
 hold off
@@ -133,36 +170,5 @@ saveas(gcf, "../results/verification/"+scenario_name+"_vrFt.png")
 
 
 
-%% Compare power of two scenario's.
-clear
-close all
-clc
-
-
-s1 = "scenario_1B_change_in_wind_speed";
-s2 = "scenario_2_use_massless";
-
-for s = [s1, s2]
-    load("../results/verification/" + s)
-    figure(1)
-    plot(out.vw_mps.Data, resample(out.Pmech_W, out.vw_mps.Time).Data);
-    hold on
-
-    figure(2)
-    plot(out.vr_mps.Data, resample(out.Ft_N, out.vr_mps.Time).Data);
-    hold on
-
-    figure(3)
-    plot(out.Pmech_W)
-    Pmech_avg_W = mean(out.Pmech_W)
-    yline(Pmech_avg_W, '--')
-    hold on
-end
-figure(1)
-legend('my winch', 'massless')
-figure(2)
-legend('my winch', 'massless')
-figure(3)
-legend('my winch', 'mean', 'massless', 'mean')
 
 

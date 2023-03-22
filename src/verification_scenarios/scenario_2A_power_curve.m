@@ -1,10 +1,10 @@
-function [scenario_name, signals, init, sim_params] = scenario_1A_change_in_path()
-%UNTITLED2 Summary of this function goes here
+function [scenario_name, signals, init, sim_params] = scenario_2A_power_curve()
+%UNTITLED Summary of this function goes here
 %   Detailed explanation goes here
 scenario_name = mfilename;
 
 % One loop = 20 sec.
-t_end = 40;
+t_end = 1000;
 sim_params = struct('t_end', t_end, ...
     'use_massless_controller', false);
 
@@ -36,7 +36,8 @@ chi_deg = timeseries(chi_deg, t);
 % Need quite a high windspeed because the quasi-steady model cannot handle
 % accelerations which is what would happen at low wind speed while flying
 % down.
-vw_mps = timeseries(17.5 * ones(size(t)), t);
+vw_mps = linspace(10, 30, length(t))';
+vw_mps = timeseries(vw_mps, t);
 
 % Pack into structs.
 signals = struct('vw_mps', vw_mps, ...

@@ -54,7 +54,6 @@ def calc_Ft(
     sys_props.update(kite_kinematics.straight_tether_length)
 
     ss = SteadyState()
-    # I found that the control setting tether force kite was most stable.
     ss.control_settings = ("reeling_speed", vr_mps)
 
     try:
