@@ -4,9 +4,12 @@ close all
 addpath('helper')
 [kite, tether, winch, environment] = load_params_mat("my_MegAWES", "../parameters");
 
+assert false
+winch.J_kgm2 = 100 * winch.J_kgm2;
+
 
 %% Update some paramters, based on tether length.
-Lt_m = 1000;  % tether length.
+Lt_m = 1500;  % tether length -> for worst-case.
 kite.E_eff = calc_E_eff(Lt_m, kite, tether);
 kite.CR_eff = kite.CL * sqrt(1 + 1/kite.E_eff^2);
 kite.C = 0.5 * environment.rho_kgpm3 * kite.S_m2 * kite.CR_eff * (1 + kite.E_eff^2);
@@ -17,38 +20,43 @@ kite.C = 0.5 * environment.rho_kgpm3 * kite.S_m2 * kite.CR_eff * (1 + kite.E_eff
 % There are two state-space models, one with a massless model and one with a linear approximate model of a heavy kite.
 use_massless = false;
 if use_massless
-    % Trim conditions.
-    Ft_0 = 0.25e6;
-    vw_0 = sqrt(9*Ft_0/(4*kite.C));
-    vr_0 = vw_0/3;
-    
-    % State-space system with extra state Ft_int which can be used for
-    % feedback.
-    % TODO: REDO!
-    A = [((-2*vw_0 + 2*vr_0) * kite.C * winch.r_m^2 - winch.friction)/winch.J_kgm2, 0;
-         kite.C * (-2*vw_0 + 2*vr_0),                                               0];
-    % Split inputs of torque and wind because one is an input and the otherone
-    % is a disturbance.
+
+    % Trim condition.
+    Ft_0 = 0.5e6;
+    beta_0 = deg2rad(30);
+    phi_0 = deg2rad(35);
+    f_0 = 1/3 * cos(beta_0) * cos(phi_0);
+    vw_0 = sqrt(Ft_0 / (kite.C * (cos(beta_0)*cos(phi_0) - f_0)^2));
+    vr_0 = vw_0 * f_0;
+
+    % Assert that that calculation is corrent.
+    assert(abs(Ft_0 - kite.C * (vw_0*cos(beta_0)*cos(phi_0) - vr_0)^2) < 0.001)
+    assert(abs(Ft_0 - kite.C * vw_0^2*(cos(beta_0)*cos(phi_0) - f_0)^2) < 0.001)
+
+    % Temporary variable as this expression comes back often.
+    temp = -2 * kite.C * (vw_0*cos(beta_0)*cos(phi_0) - vr_0);
+
+    % Build the state space system.
+    A = [(-winch.friction + winch.r_m^2*temp)/winch.J_kgm2, 0;
+         -temp,                                             0];
     B_tau = [-winch.r_m / winch.J_kgm2;
-             0                        ];
-    B_vw = [((2*vw_0 - 2*vr_0) * kite.C * winch.r_m^2) / winch.J_kgm2;
-            kite.C * (2*vw_0 - 2*vr_0)];
-    B = [B_tau, B_vw];
-    C = [kite.C * (-2*vw_0 + 2*vr_0), 0;
-         0,                           1];
-    D_tau = [0;
              0];
-    D_vw = [kite.C * (2*vw_0 - 2*vr_0);
+    B_vw = [-winch.r_m^2/winch.J_kgm2*temp*cos(beta_0)*cos(phi_0);
+            temp*cos(beta_0)*cos(phi_0)];
+    B = [B_tau, B_vw];
+    C = [A(2, :);
+         0, 1   ];
+    D_tau = [B_tau(2, :);
+             0 ];
+    D_vw = [B_vw(2, :);
             0];
     D = [D_tau, D_vw];
-    
-    sys = ss(A, B, C, D, 'StateName', {'vr', 'Ft_int'}, 'InputName', {'tau', 'vw'}, 'OutputName', {'Ft', 'Ft_int'});
-    sys_tau = ss(A, B_tau, C, D_tau, 'StateName', {'vr', 'Ft_int'}, 'InputName', 'tau', 'OutputName', {'Ft', 'Ft_int'});
+    sys = ss(A, B, C, D, 'StateName', {'v_r', 'Fte_int'}, 'InputName', {'\tau', 'v_w'}, 'OutputName', {'F_t_e', 'Fte_int'});
 else
-    theta_1 = -150842.6;
-    theta_2 = 109489.2;
+    theta_1 = -290436.9;  % massless: -113 100
+    theta_2 =  210452.0;  % massless:   80 236
     A = [(theta_1*winch.r_m^2 - winch.friction)/winch.J_kgm2, 0;
-         -theta_1,                                     0];
+         -theta_1,                                            0];
     B_tau = [-winch.r_m/winch.J_kgm2;
              0];
     B_vw = [theta_2*winch.r_m^2/winch.J_kgm2;
@@ -70,22 +78,29 @@ close all
 figure(1)
 step(sys(1, 2))  % From wind speed to tether force. It is already stable, but we want it faster and without steady-state error.
 grid('on')
-saveas(gcf, '../results/open_loop_step.png')
+saveas(gcf, "../results/open_loop_step_massless_"+use_massless+".png")
 
 figure(2)
 bode(sys(1, 2))
 grid('on')
-saveas(gcf, '../results/open_loop_bode.png')
+xlim([1e-1, 1e3])
+saveas(gcf, "../results/open_loop_bode_massless_"+use_massless+".png")
 
 %% PID design.
 Ft_over_tau = sys(1, 1);
 pidTuner(Ft_over_tau)
 % Here we want output (Ft) disturbance rejection. I don't know how to
 % select the bandwidth appropriately.
+% Selected: bandwidth: 30 rad/s, phase margin 80 deg.
 
 %% PID parameters
-Kp = -0.68;
-Ki = -31;
+if use_massless
+    Kp = -1.481;
+    Ki = -53.53;
+else
+    Kp = -0.41768;
+    Ki = -47.9043;
+end
 % For tau = - K y:
 K = [Kp, Ki];
 
@@ -98,8 +113,10 @@ figure(4)
 step(Ft_over_Fte)
 hold on
 step(feedback(Ft_over_tau, 1));
+grid on
 legend('closed loop', 'open loop')
 hold off
+saveas(gcf, "../results/closed_loop_step_ftref_massless_"+use_massless+".png")
 
 %% Closed loop.
 % Closed loop response with disturbance vw (input tau doesn't exist anymore
@@ -115,7 +132,7 @@ step(sys(1, 2))
 legend('closed loop', 'open loop')
 hold off
 grid('on')
-saveas(gcf, '../results/closed_loop_step.png')
+saveas(gcf, "../results/closed_loop_step_massless_"+use_massless+".png")
 
 % And to a ramp in wind.
 t = linspace(0, 100, 10000);
@@ -134,7 +151,7 @@ lsim(sys(1, 2), u, t);
 legend('closed loop', 'open loop')
 hold off
 grid('on')
-saveas(gcf, '../results/closed_loop_at_MegAWES_freq.png')
+saveas(gcf, "../results/closed_loop_at_MegAWES_freq_massless_"+use_massless+".png")
 
 % Bode plots
 figure(7)
@@ -144,7 +161,11 @@ bode(sys(1, 2))
 legend('closed loop', 'open loop')
 hold off
 grid('on')
-saveas(gcf, '../results/closed_loop_bode.png')
+xlim([1e-1, 1e3])
+saveas(gcf, "../results/closed_loop_bode_massless_"+use_massless+".png")
+
+% Step in tether force reference.
+
 
 
 
