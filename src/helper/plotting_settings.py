@@ -25,7 +25,7 @@ var_to_label = {
     "beta_deg": "elevation [deg]",
     "chi_deg": "course angle [deg]",
     "Ftk_N_star": "tether force kite [N]",
-    "f_star": "reeling factor [-]",
+    "f_star": "reel-out factor [-]",
     "Ftg_N_star": "tether force [N]",
     "Ftg_N": "tether force [N]",
     "P_W_star": "power [W]",
@@ -38,18 +38,18 @@ var_to_label = {
 }
 
 
-def set_labels(axs):
-    # If axs is an iterable, loop over all the individual axis.
-    if hasattr(axs, "__iter__"):
-        for ax in axs:
-            set_labels(ax)
+def set_labels(ax):
+    # If ax is an iterable, loop over all the individual axis.
+    if hasattr(ax, "__iter__"):
+        for ax_i in ax:
+            set_labels(ax_i)
 
     else:
-        axs.set_xlabel(var_to_label[axs.get_xlabel()])
-        axs.set_ylabel(var_to_label[axs.get_ylabel()])
+        ax.set_xlabel(var_to_label[ax.get_xlabel()])
+        ax.set_ylabel(var_to_label[ax.get_ylabel()])
 
         # Also the legend.
-        leg = axs.get_legend()
+        leg = ax.get_legend()
         if leg:
             if leg.get_visible():
                 try:
@@ -59,6 +59,8 @@ def set_labels(axs):
                 # multiple texts in the legend. With some digging into the source code we
                 # can still fit it.
                 except Exception:
+                    pass
+                finally:
                     for T in leg.texts:
                         if T._text in var_to_label.keys():
                             T._text = var_to_label[T._text]
