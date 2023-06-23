@@ -4,9 +4,6 @@ close all
 addpath('helper')
 [kite, tether, winch, environment] = load_params_mat("my_MegAWES", "../parameters");
 
-assert false
-winch.J_kgm2 = 100 * winch.J_kgm2;
-
 
 %% Update some paramters, based on tether length.
 Lt_m = 1500;  % tether length -> for worst-case.
@@ -18,7 +15,7 @@ kite.C = 0.5 * environment.rho_kgpm3 * kite.S_m2 * kite.CR_eff * (1 + kite.E_eff
 
 %% Make a state-space model with inputs torque and wind speed.
 % There are two state-space models, one with a massless model and one with a linear approximate model of a heavy kite.
-use_massless = false;
+use_massless = true;
 if use_massless
 
     % Trim condition.
