@@ -4,6 +4,7 @@ function [scenario_name, signals, init, sim_params, winch] = scenario_3A_bigger_
 [~, signals, init, sim_params] = scenario_1B_change_in_wind_speed();
 
 scenario_name = mfilename;
+sim_params.use_larger_winch_PI = true;
 winch.J_kgm2 = 100*winch.J_kgm2;
 
 

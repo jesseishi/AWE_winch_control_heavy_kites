@@ -1,21 +1,20 @@
-function [scenario_name, signals, init, sim_params] = scenario_1C_faster_changes()
+function [scenario_name, signals, init, sim_params] = scenario_4A_massless_kitemodel()
 %UNTITLED2 Summary of this function goes here
 %   Detailed explanation goes here
 scenario_name = mfilename;
 
 % One loop = 20 sec.
-t_end = 5;
+t_end = 40;
 sim_params = struct('t_end', t_end, ...
     'use_massless_controller', false, ...
     'use_larger_winch_PI', false, ...
-    'use_zgraggen', false, ...
-    'use_massless_kitemodel', false);
+    'use_zgraggen', true, ...
+    'use_massless_kitemodel', true);
 
 % Set the windspeed.
-% Fastest wind oscillation is 10*pi rad/s -> period = 0.2
-t = (0:0.002:t_end)';
-vw_mps = 15 + 15*sin(pi/10*t) + 5*sin(pi*t) + 4*sin(5*pi*t);
-vw_mps = 15 + 1*sin(10*pi*t);
+% If the wind speed and reeling speed start at zero they start synced up.
+t = (0:0.01:t_end)';
+vw_mps = 15 - 10*cos(pi/10*t) + 2.5*sin(pi*t);
 % But never below 0.
 vw_mps = max(vw_mps, 0.001);  % QSM model needs at least a little bit of wind.
 vw_mps = timeseries(vw_mps, t, 'Name', 'wind speed [m/s]');
