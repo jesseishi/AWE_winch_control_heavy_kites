@@ -17,13 +17,20 @@ addpath('../parameters/')
 % simIn = simIn_scenario_1_change_in_wind_speed();
 
 % New method.
-% [scenario_name, signals, init, sim_params] = scenario_1A_change_in_path();
+[scenario_name, signals, init, sim_params] = scenario_1A_change_in_path();
 % [scenario_name, signals, init, sim_params] = scenario_1B_change_in_wind_speed();
 % [scenario_name, signals, init, sim_params] = scenario_1C_faster_changes();
 % [scenario_name, signals, init, sim_params] = scenario_2A_power_curve();
 % [scenario_name, signals, init, sim_params] = scenario_2B_power_curve_massless_controller();
-[scenario_name, signals, init, sim_params, winch] = scenario_3A_bigger_inertia(winch);  % Use PI controller tuned for this.
-% scenario_name = "scenario_3B_bigger_inertia_no_PI";  % Adjust in Simulink.  HIGHER POWER OUTPUT... OH NO. I think this shows that a not greedy strategy is better (not highest instantaneous power extraction).
+% [scenario_name, signals, init, sim_params] = scenario_2C_constant_wind();
+% [scenario_name, signals, init, sim_params] = scenario_2D_constant_wind_massless_controller();
+% [scenario_name, signals, init, sim_params, winch] = scenario_3A_bigger_inertia(winch);
+% [scenario_name, signals, init, sim_params] = scenario_4A_massless_kitemodel();
+% [scenario_name, signals, init, sim_params, winch] = scenario_4B_massless_kitemodel_bigger_inertia(winch);
+% [scenario_name, signals, init, sim_params, winch] = scenario_4C_massless_kitemodel_smaller_radius(winch);
+% [scenario_name, signals, init, sim_params, winch] = scenario_4D_massless_kitemodel_BIGGER_inertia(winch);
+
+% For the paper
 
 
 %% Plot path.
@@ -121,7 +128,7 @@ hold off
 ylabel('winch torque [Nm]')
 xlabel('time [s]')
 grid on
-ylim([-1e7, 1e7])
+% ylim([-1e7, 1e7])
 saveas(gcf, "../results/verification/"+scenario_name+"_torque.png")
 
 %% Reeling speed
@@ -137,12 +144,15 @@ saveas(gcf, "../results/verification/"+scenario_name+"_reeling_speed.png")
 figure(4)
 plot(out.Pmech_W)
 hold on
-idx = out.Pmech_W.Time > 0.35;
+plot(out.vr_mps * out.Ft_N)
+idx = out.Pmech_W.Time > 0.1;  % Calculate the average power after it has reached the steady-state.
 temp = timeseries(out.Pmech_W.Data(idx), out.Pmech_W.Time(idx));
 Pmech_avg_W = mean(temp, 'Weighting', 'Time');
 yline(Pmech_avg_W, '--', sprintf('%.2f MW', Pmech_avg_W/1e6))
+
+
 hold off
-legend('power', 'mean')
+legend('power out', 'power in', 'mean')
 ylabel('power output [W]')
 xlabel('time [s]')
 grid on
@@ -155,12 +165,18 @@ figure(5)
 plot(out.vr_mps.Data, resample(out.Ft_N, out.vr_mps.Time).Data);
 hold on
 theta = [187486.8, 7784.0, 30865.2];
-% theta = [146429.5 28806.3 28242.9];
 vr_mps = min(0, min(out.vr_mps)):0.1:max(out.vr_mps);
 Ft_star_N = theta(1) + theta(2) * vr_mps + theta(3) * vr_mps.^2;
 Ft_star_N = max(Ft_star_N, 0.5e6);
 Ft_star_N(vr_mps < 0) = 0.5e6;
 plot(vr_mps, Ft_star_N, '--');
+
+% Only for massless.
+% Lt_m = 1000;  % tether length.
+% kite.E_eff = calc_E_eff(Lt_m, kite, tether);
+% kite.CR_eff = kite.CL * sqrt(1 + 1/kite.E_eff^2);
+% kite.C = 0.5 * environment.rho_kgpm3 * kite.S_m2 * kite.CR_eff * (1 + kite.E_eff^2);
+% plot(vr_mps, 4*kite.C*vr_mps.^2, '--');
 legend('actual', 'ideal')
 hold off
 ylabel('tether force [N]')
@@ -169,6 +185,22 @@ grid on
 saveas(gcf, "../results/verification/"+scenario_name+"_vrFt.png")
 
 
+%% Is the system lagging?
+figure(6)
+plot(out.vr_mps)
+hold on
+plot(signals.vw_mps)
+ylabel('speed [m/s]')
 
+% yyaxis right
+% ylabel('reel-out factor [-]')
+% plot(out.vr_mps.Time, out.vr_mps.Data ./ resample(signals.vw_mps, out.vr_mps.Time).Data)
+% ylim([0, 1])
+% yline(1/3, '--', 'optimal reel-out factor')
+
+grid on
+xlabel('time [s]')
+legend('reel-out speed', 'wind speed', 'reel-out factor')
+saveas(gcf, "../results/verification/"+scenario_name+"_vrvw.png")
 
 
