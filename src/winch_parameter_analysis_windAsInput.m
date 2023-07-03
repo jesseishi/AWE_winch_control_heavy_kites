@@ -370,3 +370,146 @@ AIAA_formatting(gcf, 0.5, 0.5/1.6)
 saveas(gcf, '../results/paper/winch_sizing_Ft.png')
 
 
+%% Most genius plot
+figure
+LineWidth = 3;
+
+vr = 0:0.1:6;
+Ft = 4*kite.C*vr.^2;
+plot(vr, Ft, '--k', 'LineWidth', LineWidth);
+hold on
+grid on
+xlabel('Reel-out speed, m/s')
+ylabel('Tether Force, N')
+ylim([-2e5, 12e5])
+legend('ideal', 'Location', 'NorthWest')
+
+saveas(gcf, '../results/presentation/winch_sizing_0.png')
+
+r_m = 1.5;
+
+t = 0:0.01:30;
+base_frequency_rad = pi/10;
+
+rJf = [1.5, 1e6, 1;
+       0.1, 1e4, 1;
+%        0.1, 1e4, 10;
+       1.5, 1e4, 1];
+legendnames = {'too large inertia', '', '', 'too low radius', '', '', 'final parameters', '', ''};
+
+colors = get(gca,'ColorOrder');
+
+for i = 1:size(rJf, 1)
+    r_m = rJf(i, 1);
+    J_kgm2 = rJf(i, 2);
+    freq_multiplier = rJf(i, 3);
+
+    for vr0 = 1:2:5
+    
+        % Trim condition.
+        vw0 = 3*vr0;  % f = 1/3.
+        Ft0 = 4*kite.C*vr0^2;
+        
+        vr_over_vw = tf(4 * kite.C * r_m^2 * vr0, ...
+            [J_kgm2, 12 * kite.C * r_m^2 * vr0 + winch.friction]);
+        D = 2*kite.C*(vw0 - vr0);
+        Ft_over_vw = D * (1-vr_over_vw);
+    
+        
+%         u = 1.5 * (sin(freq_multiplier*0.05*2*pi*t - pi/2) + 1);  % Phase offset and bias make the sine start at 0 and oscilate between 0 and 2.
+        u = 2*sin(freq_multiplier*0.05*2*pi*t);
+
+        vr = lsim(vr_over_vw, u, t);
+        Ft = lsim(Ft_over_vw, u, t);
+
+        % Only when making gifs:
+%         legend off
+%         for ti = 1:length(t)
+%             if mod(ti, 100) == 0
+%                 plot(vr(1:ti) + vr0, Ft(1:ti) + Ft0, 'Color', colors(i, :), 'LineWidth', LineWidth)
+%                 exportgraphics(gcf, sprintf('windDisturbance_%d.gif', i), 'Append', true);
+%             end
+%         end
+    
+        plot(vr + vr0, Ft + Ft0, 'Color', colors(i, :), 'LineWidth', LineWidth)
+    end
+    legend(['ideal', legendnames(1:i*3)])
+    saveas(gcf, sprintf('../results/presentation/winch_sizing2_%d.png', i))
+end
+
+
+% AIAA_formatting(gcf, 0.8, 0.8/1.6)
+
+%% joe
+figure
+hold on
+grid on
+xlabel('Reel-out speed, m/s')
+ylabel('Tether Force, N')
+% ylim([-2e5, 12e5])
+% legend('ideal', 'Location', 'NorthWest')
+
+vr = 0:0.01:9.0;
+Ft = 4*kite.C*vr.^2;
+P = vr.*Ft;
+
+mymap = [0.4660 0.6740 0.1880
+         0.9290 0.6940 0.1250
+         0.8500 0.3250 0.0980];
+P_idx = 1e6*[0, 10, 15];
+for i = 1:3
+    idx = P>=P_idx(i);
+    scatter(vr(idx), Ft(idx), [], mymap(i, :), 'filled')
+end
+
+legend('  0 MW < P < 10 MW', '10 MW < P < 15 MW', '15 MW < P < 20 MW', ...
+    'Location', 'NorthWest')
+
+saveas(gcf, '../results/presentation/power_lim.png')
+
+Ft_P10MW = (10e6 * sqrt(4 * kite.C))^(2/3);
+yline(Ft_P10MW)
+
+legend('  0 MW < P < 10 MW', '10 MW < P < 15 MW', '15 MW < P < 20 MW', ...
+    'Tether Force Limit', ...
+    'Location', 'NorthWest')
+
+saveas(gcf, '../results/presentation/power_force_lim.png')
+
+%% Quick.
+figure
+hold on
+grid on
+xlabel('Reel-out speed, m/s')
+ylabel('Tether Force, N')
+
+plot(vr, Ft, 'LineWidth', 3)
+legend('without force limit')
+saveas(gcf, '../results/presentation/vrFt_without_limit.png')
+Ft_limited = min(Ft, Ft_P10MW);
+plot(vr, Ft_limited, 'LineWidth', 3)
+legend('without force limit', 'with force limit')
+saveas(gcf, '../results/presentation/vrFt_with_limit.png')
+
+
+%%
+vr = linspace(0, 9, 100);
+Ft = linspace(0, 2.5e6, 100);
+[VR, FT] = meshgrid(vr, Ft);
+
+P = VR .* FT;
+figure
+Ft = 4*kite.C*vr.^2;
+Ft_limited = min(Ft, Ft_P10MW);
+plot(vr, Ft_limited)  % Cheating color coding.
+hold on
+plot(vr, Ft_limited, 'LineWidth',3)
+grid on
+
+% surface(VR, FT, P, 'EdgeColor','none')
+contour(VR, FT, P./1e6, [0, 5, 10, 15, 20],"ShowText",true,"LabelFormat","%0.1f MW",'LineWidth',3)
+legend('','Optimal with tether force limit', '')
+xlabel('Reel-out speed, m/s')
+ylabel('Tether force, N')
+
+saveas(gcf, '../results/presentation/vrFt_with_powerlimit.png')
