@@ -1,11 +1,11 @@
-%% Set some winch parameters close to the values of MegAWES.
+%% Set some winch parameters.
 clear
 close all
 addpath('helper')
 [kite, tether, winch, environment] = load_params_mat("MegAWES", "../parameters");
 s = tf('s');
 
-%% Update some paramters, based on tether length.
+%% Update some parameters, based on tether length.
 Lt_m = 1000;  % tether length.
 kite.E_eff = calc_E_eff(Lt_m, kite, tether);
 kite.CR_eff = kite.CL * sqrt(1 + 1/kite.E_eff^2);
@@ -86,7 +86,7 @@ legend('J = 1e3 kgm^2', 'J = 1e4 kgm^2', 'J = 1e5 kgm^2', 'J = 1e6 kgm^2', 'J = 
 
 %% Visualise the magnitude of the bode plot at the MegAWES frequency for different J, r and v_r_0.
 w = pi/10;
-% w = w*10;  % Safety factor so that we can also respond to e.g. gusts. TODO: Do we want this? Maybe it's better to not respond to that. Maybe a safety factor of 2 would be better.
+w = w*10;  % Safety factor so that we can also respond to e.g. gusts. TODO: Do we want this? Maybe it's better to not respond to that. Maybe a safety factor of 2 would be better.
 
 
 N = 67;  % Ensures all 10^N where N is an integer are in the logspace for Jv.
@@ -185,9 +185,6 @@ xlim([Jv(1), Jv(end)])
 
 
 %% Chosen values:
-% This should yield a db of mag2db(0.99) = -0.0873 at pi/10*10 rad/s.
-% The bandwidth to achieve this must be higher (at bandwidth you have -3
-% db), the bandwidth is 2.23 rad/s.
 vr_0 = 1.0;
 J_kgm2 = 1e4;
 r_m = 1.5;
@@ -226,17 +223,7 @@ Kws = logspace(3, 6, N);
 
 MAGS = abs(12 * kite.C * VRS ./ (KWS * 1j* w + 12 * kite.C * VRS));
 
-% figure('Units', 'centimeters', 'Position', [5, 5, 15.75, 15.75])
 figure()
-% Nice to have both continuous surface and then lines on the contours but
-% since surface is 3D you don't have a grid...
-% s = surface(VRS, KWS, MAGS);
-% set(s, 'EdgeColor', 'none')
-% hold on
-% contour3(VRS, KWS, MAGS, [db2mag(-3), 0.90, 0.95, 0.99], '-k');
-
-% contourf(VRS, KWS, MAGS, [0.5, db2mag(-3), 0.90, 0.95, 0.99]);
-
 [M, c] = contourf(VRS, KWS, MAGS, linspace(0, 1, 101));  % a bit slow..
 c.EdgeColor = 'none';
 hold on
@@ -274,7 +261,7 @@ xlabel('Frequency, rad/s')
 AIAA_formatting(gcf, 0.6, 0.6/1.2)
 saveas(gcf, '../results/paper/winch_bode.png')
 
-%% WInch control strategy.
+%% Winch control strategy.
 vr = linspace(0, 7, 100);
 Ft_star = 4 * kite.C * vr.^2;
 
@@ -316,11 +303,6 @@ legend('F_t', 'P_n')
 AIAA_formatting(gcf, 0.6, 0.6)
 saveas(gcf, '../results/paper/winch_step2.png')
 
-
-
-
-% figure
-% step(Ft_over_vw)
 
 %% MAGS map but for Ft.
 % I can introduce a winch sizing constant: Kw = J/r^2 and ignore friction.
@@ -370,7 +352,7 @@ AIAA_formatting(gcf, 0.5, 0.5/1.6)
 saveas(gcf, '../results/paper/winch_sizing_Ft.png')
 
 
-%% Most genius plot
+%% Nice visual for in a presentation. Can also output gifs to explain the effect of lag caused by the inertia.
 figure
 LineWidth = 3;
 
@@ -440,7 +422,7 @@ end
 
 % AIAA_formatting(gcf, 0.8, 0.8/1.6)
 
-%% joe
+%% Another plot for the presentation.
 figure
 hold on
 grid on
@@ -476,7 +458,7 @@ legend('  0 MW < P < 10 MW', '10 MW < P < 15 MW', '15 MW < P < 20 MW', ...
 
 saveas(gcf, '../results/presentation/power_force_lim.png')
 
-%% Quick.
+%% Overview plot.
 figure
 hold on
 grid on
@@ -492,7 +474,7 @@ legend('without force limit', 'with force limit')
 saveas(gcf, '../results/presentation/vrFt_with_limit.png')
 
 
-%%
+%% Overview plot 2.
 vr = linspace(0, 9, 100);
 Ft = linspace(0, 2.5e6, 100);
 [VR, FT] = meshgrid(vr, Ft);

@@ -14,12 +14,13 @@ from tqdm import tqdm
 workshop_path = os.path.join(parent_folder_path, "workshop")
 sys.path.append(workshop_path)
 from qsm import Environment, KiteKinematics, SteadyState, SystemProperties
+
 from helper.load_params import load_params
 
 
 # Class that builds a DataFrame containing lots of possible steady states for
 # a certain set of parameters.
-# TODO: Path stuff: You now need to run this from the `src` directory and from a Windows machine. Use builtin pathlib.
+# TODO: Path stuff: You now need to run this from the `src` directory and from a Windows machine. To make it better, use the builtin pathlib library.
 # TODO: logging instead of print, see: https://stackoverflow.com/questions/15727420/using-logging-in-multiple-modules
 # and https://docs.python.org/3/howto/logging.html#configuring-logging-for-a-library
 class QSSBuilder:
@@ -115,7 +116,6 @@ class QSSBuilder:
             desc="Calculating quasi-steady states",
             total=total_rows,
         ):
-
             # Don't recalculate previously calculated steady states.
             if row.calculated_SS:
                 continue
@@ -132,7 +132,7 @@ class QSSBuilder:
             self.df.at[row.Index, "vr_mps"] = f * row.vw_mps
 
     def calculate_new_state(self, row):
-        # Wrapper around SteadyState class of qsm.py
+        # Wrapper around SteadyState class of qsm.py of the workshop submodule.
         # Make the environment, system properties and kite kinematic objects.
         env_state = {
             "wind_speed": row.vw_mps,

@@ -1,11 +1,11 @@
-%% Set some winch parameters close to the values of MegAWES.
+%% Set some winch parameters.
 clear
 close all
 addpath('helper')
 [kite, tether, winch, environment] = load_params_mat("MegAWES", "../parameters");
 s = tf('s');
 
-%% Update some paramters, based on tether length.
+%% Update some parameters, based on tether length.
 Lt_m = 1000;  % tether length.
 kite.E_eff = calc_E_eff(Lt_m, kite, tether);
 kite.CR_eff = kite.CL * sqrt(1 + 1/kite.E_eff^2);
@@ -27,7 +27,7 @@ plot(vr, Ft)
 figure
 hold on
 
-vr_0 = 4.0278932;  % 0.5 MN tether force. TODO: Should I update it?
+vr_0 = 4.0278932;  % 0.5 MN tether force.
 % vr_0 = 2.8487939;  % 0.25 MN tether force.
 Ft_0 = (4*kite.C*winch.r_m^2*vr_0^2+winch.friction*vr_0 ) / winch.r_m^2
 
@@ -94,26 +94,11 @@ xlim([Jv(1), Jv(end)])
 saveas(gcf, '../results/power_frac_Jrvr0.png')
 
 %% Chosen values:
-% J = 1e6;
-% r = 2.34;
-
 J = 1e4;
 r = 1.5;
 vr_0 = 1;
 
-% at:
-% vr_0 = 2.848;      % 0.25e6 tether force.
-
-
-% % This should yield a db of mag2db(0.99) = -0.0873 at pi/10 rad/s.
-% % The bandwidth to achieve this must be higher (at bandwidth you have -3
-% % db), the bandwidth is 2.23 rad/s.
-% vr_0 = 4.0278932;  % 0.5e6 tether force.
-% J = 1e6;
-% r = 3.0;
-
 pole = -(8 * kite.C * r^2 * vr_0 + winch.friction) / J;
-
 
 P_norm_over_Ft = (12*kite.C*vr_0^2*r^2) / (J*s + 8*kite.C*r^2*vr_0 + winch.friction) * ...
         (8*kite.C*r^2*vr_0 + winch.friction) / (12*kite.C*vr_0^2*r^2);
@@ -127,8 +112,6 @@ xline(-pole, '--', 'bandwidth')
 yline(mag2db(0.99), '--', '0.99 power fraction')
 ylim([-20, 1])
 saveas(gcf, '../results/bode_P_over_Pideal_over_f_tuned_winch.png')
-
-
 
 % % Create zoomed plot inside the figure.
 % axes('Position',[.55 .452 .2 .2])
@@ -145,5 +128,3 @@ yline(mag2db(0.99), '--', '0.99 power fraction')
 % ylabel('')
 grid on
 saveas(gcf, '../results/bode_P_over_Pideal_over_f_tuned_winch_zoom.png')
-
-

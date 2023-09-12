@@ -5,12 +5,11 @@ addpath('helper')
 [kite, tether, winch, environment] = load_params_mat("my_MegAWES", "../parameters");
 
 
-%% Update some paramters, based on tether length.
+%% Update some parameters, based on tether length.
 Lt_m = 1500;  % tether length -> for worst-case.
 kite.E_eff = calc_E_eff(Lt_m, kite, tether);
 kite.CR_eff = kite.CL * sqrt(1 + 1/kite.E_eff^2);
 kite.C = 0.5 * environment.rho_kgpm3 * kite.S_m2 * kite.CR_eff * (1 + kite.E_eff^2);
-
 
 
 %% Make a state-space model with inputs torque and wind speed.

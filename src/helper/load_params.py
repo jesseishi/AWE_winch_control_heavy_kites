@@ -1,9 +1,9 @@
 import os
+
 import yaml
 
 
 def load_params(param_name, params_dir=None):
-
     if params_dir is None:
         path = f"{param_name}.yaml"
     else:

@@ -14,6 +14,8 @@ sys.path.append(workshop_path)
 from qsm import Environment, KiteKinematics, SteadyState, SystemProperties
 
 
+# This function can be called from Simulink to use the quasi-steady model with mass from
+# the workshop submodule.
 def calc_Ft(
     vw_mps,
     vr_mps,

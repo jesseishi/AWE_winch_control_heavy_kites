@@ -8,15 +8,6 @@ addpath('../parameters/')
 
 
 %% Load a scenario
-% TODO: It would be nice if you could also still run the sim from Simulink
-% itself without this simIn stuff. Find out how to do that. Do I need a
-% similar structure to MegAWES where you first put all variables in your
-% workspace and then put then in a simIn object?
-% simIn is for temporarily changing the variables of a model. So good to
-% use structure of MegAWES.
-% simIn = simIn_scenario_1_change_in_wind_speed();
-
-% New method.
 [scenario_name, signals, init, sim_params] = scenario_1A_change_in_path();
 % [scenario_name, signals, init, sim_params] = scenario_1B_change_in_wind_speed();
 % [scenario_name, signals, init, sim_params] = scenario_1C_faster_changes();
@@ -29,8 +20,6 @@ addpath('../parameters/')
 % [scenario_name, signals, init, sim_params, winch] = scenario_4B_massless_kitemodel_bigger_inertia(winch);
 % [scenario_name, signals, init, sim_params, winch] = scenario_4C_massless_kitemodel_smaller_radius(winch);
 % [scenario_name, signals, init, sim_params, winch] = scenario_4D_massless_kitemodel_BIGGER_inertia(winch);
-
-% For the paper
 
 
 %% Plot path.
@@ -64,9 +53,6 @@ if plot_path
 end
 
 %% Run sim
-% out = sim(simIn);
-
-% New method
 tic
 out = sim('qsm_sim.slx');
 save("../results/verification/" + scenario_name)
